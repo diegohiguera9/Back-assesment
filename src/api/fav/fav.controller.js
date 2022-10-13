@@ -5,13 +5,12 @@ const ErrroResponse = require("../utils/errorResponse");
 module.exports = {
   async create(req, res, next) {
     try {
-      
       const { userId, title, description } = req.body;
 
       const user = await User.findById(userId);
 
       if (!user) {
-        res.status(400).json({ message: "No user found" });
+        return next(new ErrroResponse('No user found',400));
       }
 
       const newFav = {
@@ -20,11 +19,11 @@ module.exports = {
         user,
       };
 
-      const fav = await Fav.create(newFav);
-      user.favs.push(fav);
+      const fav = await Fav.create(newFav);      
+      user.favs.push(fav._id);
       await user.save({ validateBeforeSave: false });
 
-      res.status(200).json({ message: "fav added", data: fav });
+      res.status(200).json({ fav });
     } catch (err) {
       next(err);
     }
@@ -38,13 +37,17 @@ module.exports = {
       const user = await User.findById(userId);
 
       if (!user) {
-        res.status(400).json({ message: "No user found" });
+        return next(new ErrroResponse('No user found',400));
       }
 
       const fav = await Fav.findById(favId)
 
       if(!fav){
-        res.status(400).json({message:'No fav list found'})
+        return next(new ErrroResponse('No fav list found',400))
+      }
+
+      if(!user._id.equals(fav.user)){
+        return next(new ErrroResponse('User not authorized to this list',404))
       }
 
       res.status(200).json({fav})
@@ -59,10 +62,15 @@ module.exports = {
       const favId = req.params.id;
 
       const user = await User.findById(userId);
+      const fav = await Fav.findById(favId)
 
       if (!user) {
-        res.status(400).json({ message: "No user found" });
-      }      
+        return next(new ErrroResponse('No user found',400));
+      }  
+      
+      if(!user._id.equals(fav.user)){
+        return next(new ErrroResponse('User not authorized to this list',404))
+      }
 
       const newFavs = user.favs.filter(item=>{
         return favId !== item.toString()
@@ -88,8 +96,8 @@ module.exports = {
         select:'title description -_id'
       })
       
-      if (!user){
-        next(new ErrroResponse('No user found',400))
+      if (!user) {
+        return next(new ErrroResponse('No user found',400));
       }
 
       const {favs} = user

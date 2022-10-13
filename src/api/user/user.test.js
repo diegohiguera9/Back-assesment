@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const clonServer = require("supertest");
 const app = require("../../app");
 const { connect, disconnected, cleanup } = require("../../db.js");
@@ -27,7 +26,7 @@ describe("User", () => {
     );
   });
 
-  it("should nor create user when there is no email", async () => {
+  it("should not create user when there is no email", async () => {
     const user = { password: "12345" };
     const res = await clonServer(app).post("/auth/local/singup").send(user);
 

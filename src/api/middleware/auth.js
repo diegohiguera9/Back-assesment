@@ -1,20 +1,26 @@
-const jwt = require('jsonwebtoken')
+const jwt = require("jsonwebtoken");
+const ErrroResponse = require("../utils/errorResponse");
 
-exports.isAuthenticated = (req,res,next) =>{
-    try{
-        const {authorization}  = req.headers
+exports.isAuthenticated = (req, res, next) => {
+  try {
+    const { authorization } = req.headers;
 
-        const [_,token] = authorization.split(' ')
-       
-        if (!token) return res.status(400).send('No token provided')
-
-        const {id} = jwt.verify(token,process.env.SECRET_KEY)
-
-        req.body.userId = id
-
-        next()
-
-    } catch(err){
-        next(err)
+    if (!authorization) {
+      return next(new ErrroResponse("No header provided", 400));
     }
-}
+
+    const [_, token] = authorization.split(" ");
+
+    if (!token) {
+      return next(new ErrroResponse("No token provided", 400));
+    }
+
+    const { id } = jwt.verify(token, process.env.SECRET_KEY);
+
+    req.body.userId = id;
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
