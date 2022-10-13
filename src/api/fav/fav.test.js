@@ -79,6 +79,22 @@ describe("Fav", () => {
     expect(response.body).toHaveProperty("fav");
   });
 
+  it("should not find a fav correctly if user does not exist", async () => {
+    const user = await loginUser();
+    const fav = await createFav(user);
+    const favId = fav._id;
+
+    const response = await clonServer(app)
+      .get(`/api/favs/${favId}`)
+      .set(
+        "Authorization",
+        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzNDVkYmE5ZjcyZTJkOWEwNjIyODFhMyIsImlhdCI6MTY2NTY2NTA1MH0.svPEnLZaboHdJ2gGomGVISNZjDd6wPhOnJ1mUlTAEZI"
+      )
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toMatch("No user found");
+  });
+
   it("should not find fav when fav does not exist", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
@@ -109,7 +125,7 @@ describe("Fav", () => {
     expect(response.body.message).toMatch("User not authorized to this list");
   });
 
-  it("should deleted a created fav", async()=>{
+  it("should deleted a created fav", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
     const fav = await createFav(user);
@@ -122,9 +138,9 @@ describe("Fav", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toMatch("Sucssesfully deleted");
-  })
+  });
 
-  it("should not delete a fav is user do not create it", async()=>{
+  it("should not delete a fav is user do not create it", async () => {
     const user = await loginUser();
     const user2 = await loginUser("otroemail@email.com");
     const authHeader = createHeader(user2);
@@ -138,9 +154,9 @@ describe("Fav", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body.message).toMatch("User not authorized to this list");
-  })
+  });
 
-  it("should list all de fav created by a user", async()=>{
+  it("should list all de fav created by a user", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
     await createFav(user);
@@ -152,15 +168,15 @@ describe("Fav", () => {
       .send();
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toHaveProperty("favs")
-    expect(response.body.favs.length).toEqual(2)
-  })
+    expect(response.body).toHaveProperty("favs");
+    expect(response.body.favs.length).toEqual(2);
+  });
 });
 
 async function loginUser(email = "jhondoe@email.com") {
   const newUser = {
     email,
-    password: "Clave123*",
+    password: "Diego123*",
   };
 
   const user = await User.create(newUser);

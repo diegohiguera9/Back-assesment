@@ -1,8 +1,10 @@
 const { Schema, model, models } = require("mongoose");
+const ErrroResponse = require("../utils/errorResponse");
+const bcrypt = require("bcrypt");
 
 const emailRegex = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
 const passwordRegex = new RegExp(
-  /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/
+  /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{6,14}$/
 );
 
 const userSchema = new Schema(
@@ -10,7 +12,7 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
-      match: [emailRegex,'Not valid email'],
+      match: [emailRegex, "Not valid email"],
       validate: [
         {
           async validator(email) {
@@ -27,24 +29,37 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, "Must write a password"],
-      // match: [
-      //   passwordRegex,
-      //   "Password should contain at least one digit, one lower case, one upper case",
-      // ],
-      // minlength: [3, "Password must be 8 characters min"],
-      // maxlength: [14, "Password must be 8 characters min"],
+      required: true,
     },
-    favs:{
-        type:[{type:Schema.Types.ObjectId, ref:'Fav'}],
-        required:false
-    }
+    favs: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Fav" }],
+      required: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const User = model('User',userSchema)
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
 
-module.exports = User
+  if (!passwordRegex.test(this.password)) {
+    return next(
+      new ErrroResponse(
+        "Password must have at least a symbol, upper and lower case letters and a number",
+        400
+      )
+    );
+  }
+
+  this.password = await bcrypt.hash(this.password, 8);
+
+  return next();
+});
+
+const User = model("User", userSchema);
+
+module.exports = User;

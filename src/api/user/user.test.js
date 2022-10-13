@@ -16,7 +16,7 @@ describe("User", () => {
   });
 
   it("should create a user correctly", async () => {
-    const user = { email: "test@test.com", password: "12345" };
+    const user = { email: "test@test.com", password: "Diego123*" };
     const res = await clonServer(app).post("/auth/local/singup").send(user);
 
     expect(res.statusCode).toBe(201);
@@ -27,15 +27,32 @@ describe("User", () => {
   });
 
   it("should not create user when there is no email", async () => {
-    const user = { password: "12345" };
+    const user = { password: "Diego123*" };
     const res = await clonServer(app).post("/auth/local/singup").send(user);
 
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toMatch("Path `email` is required.");
   });
 
+  it("should not create user when there is no password", async () => {
+    const user = { email: "est@test.com" };
+    const res = await clonServer(app).post("/auth/local/singup").send(user);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toMatch("Path `password` is required.");
+  });
+
+  it("should not create user when there password is not strong", async () => {
+    const user = { email: "test@test.com", password: "123" };;
+    const res = await clonServer(app).post("/auth/local/singup").send(user);
+    
+    console.log(res.body.message)
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toMatch("Password must have at least a symbol, upper and lower case letters and a number");
+  });
+
   it("should not create user when email is invalid", async () => {
-    const user = { email:"diego",password: "12345" };
+    const user = { email:"diego",password: "Diego123*" };
     const res = await clonServer(app).post("/auth/local/singup").send(user);
 
     expect(res.statusCode).toBe(400);
@@ -43,7 +60,7 @@ describe("User", () => {
   });
 
   it("should not create user when email already exist", async () => {
-    const user = { email: "test@test.com", password: "12345" };
+    const user = { email: "test@test.com", password: "Diego123*" };
     await clonServer(app).post("/auth/local/singup").send(user);
     const res = await clonServer(app).post("/auth/local/singup").send(user);
 
@@ -52,7 +69,7 @@ describe("User", () => {
   });
 
   it("should signin a user correctly", async () => {
-    const user = { email: "test@test.com", password: "12345" };
+    const user = { email: "test@test.com", password: "Diego123*" };
     await clonServer(app).post("/auth/local/singup").send(user);
     const res = await clonServer(app).post("/auth/local/login").send(user);
 
@@ -64,7 +81,7 @@ describe("User", () => {
   });
 
   it("should not login with incorrect password", async () => {
-    const user = { email: "test@test.com", password: "12345" };
+    const user = { email: "test@test.com", password: "Diego123*" };
     await clonServer(app).post("/auth/local/singup").send(user);
     const res = await clonServer(app).post("/auth/local/login").send({...user,password:"1"});
 
@@ -73,7 +90,7 @@ describe("User", () => {
   });
 
   it("should not login if email does not exist", async () => {
-    const user = { email: "test@test.com", password: "12345" };
+    const user = { email: "test@test.com", password: "Diego123*" };
     const res = await clonServer(app).post("/auth/local/login").send(user);
 
     expect(res.statusCode).toBe(400);

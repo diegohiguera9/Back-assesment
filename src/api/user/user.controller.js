@@ -8,11 +8,8 @@ module.exports = {
     try {
       const data = req.body;
 
-      const encPassword = await bcrypt.hash(data.password, 8);
-
       const newUser = {
         ...data,
-        password: encPassword,
       };
 
       const user = await User.create(newUser);
