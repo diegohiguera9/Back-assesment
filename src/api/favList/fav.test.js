@@ -3,7 +3,6 @@ const clonServer = require("supertest");
 const app = require("../../app");
 const { connect, disconnected, cleanup } = require("../../db.js");
 const User = require("../user/user.model");
-const Fav = require("./fav.model");
 const mongoose = require("mongoose");
 
 describe("Fav", () => {
@@ -22,14 +21,20 @@ describe("Fav", () => {
   it("should create a new list of favorites correctly", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
-    const fav = { title: "fav title", description: "fav description" };
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
     const res = await clonServer(app)
       .post("/api/favs")
       .set("Authorization", authHeader)
       .send(fav);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("fav");
+    expect(res.body).toHaveProperty("favList");
   });
 
   it("should require authorization in order to create new fav list", async () => {
@@ -67,11 +72,23 @@ describe("Fav", () => {
   it("should find a fav correctly while auth and favId ok", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
-    const fav = await createFav(user);
-    const favId = fav._id;
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    const res = await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("favList");
 
     const response = await clonServer(app)
-      .get(`/api/favs/${favId}`)
+      .get(`/api/favs/${res.body.favList._id}`)
       .set("Authorization", authHeader)
       .send(fav);
 
@@ -81,15 +98,25 @@ describe("Fav", () => {
 
   it("should not find a fav correctly if user does not exist", async () => {
     const user = await loginUser();
-    const fav = await createFav(user);
-    const favId = fav._id;
+    const authHeader = createHeader(user);
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    const res = await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
 
     const response = await clonServer(app)
-      .get(`/api/favs/${favId}`)
+      .get(`/api/favs/${res.body.favList._id}`)
       .set(
         "Authorization",
         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzNDVkYmE5ZjcyZTJkOWEwNjIyODFhMyIsImlhdCI6MTY2NTY2NTA1MH0.svPEnLZaboHdJ2gGomGVISNZjDd6wPhOnJ1mUlTAEZI"
-      )
+      );
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toMatch("No user found");
@@ -111,14 +138,25 @@ describe("Fav", () => {
 
   it("should not allow user that did not created the list", async () => {
     const user = await loginUser();
+    const authHeader = createHeader(user);
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    const res = await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
+
     const user2 = await loginUser("otroemail@email.com");
-    const authHeader = createHeader(user2);
-    const fav = await createFav(user);
-    const favId = fav._id;
+    const authHeader2 = createHeader(user2);
 
     const response = await clonServer(app)
-      .get(`/api/favs/${favId}`)
-      .set("Authorization", authHeader)
+      .get(`/api/favs/${res.body.favList._id}`)
+      .set("Authorization", authHeader2)
       .send(fav);
 
     expect(response.statusCode).toBe(404);
@@ -128,11 +166,20 @@ describe("Fav", () => {
   it("should deleted a created fav", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
-    const fav = await createFav(user);
-    const favId = fav._id;
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    const res = await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
 
     const response = await clonServer(app)
-      .delete(`/api/favs/${favId}`)
+      .delete(`/api/favs/${res.body.favList._id}`)
       .set("Authorization", authHeader)
       .send(fav);
 
@@ -142,14 +189,25 @@ describe("Fav", () => {
 
   it("should not delete a fav is user do not create it", async () => {
     const user = await loginUser();
+    const authHeader = createHeader(user);
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    const res = await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
+
     const user2 = await loginUser("otroemail@email.com");
-    const authHeader = createHeader(user2);
-    const fav = await createFav(user);
-    const favId = fav._id;
+    const authHeader2 = createHeader(user2);
 
     const response = await clonServer(app)
-      .delete(`/api/favs/${favId}`)
-      .set("Authorization", authHeader)
+      .delete(`/api/favs/${res.body.favList._id}`)
+      .set("Authorization", authHeader2)
       .send(fav);
 
     expect(response.statusCode).toBe(404);
@@ -159,8 +217,22 @@ describe("Fav", () => {
   it("should list all de fav created by a user", async () => {
     const user = await loginUser();
     const authHeader = createHeader(user);
-    await createFav(user);
-    await createFav(user);
+    const fav = {
+      name: "listname",
+      favs: [
+        { title: "fav title", description: "fav description", link: "alink" },
+        { title: "fav title2", description: "fav description2", link: "alink" },
+      ],
+    };
+    await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
+
+    await clonServer(app)
+      .post("/api/favs")
+      .set("Authorization", authHeader)
+      .send(fav);
 
     const response = await clonServer(app)
       .get(`/api/favs`)
@@ -192,16 +264,4 @@ function createHeader(user) {
   return `Bearer ${token}`;
 }
 
-async function createFav(user) {
-  const newFav = {
-    title: "Fav",
-    description: "Fav description",
-    user,
-  };
 
-  const fav = await Fav.create(newFav);
-  user.favs.push(fav._id);
-  await user.save({ validateBeforeSave: false });
-
-  return fav;
-}

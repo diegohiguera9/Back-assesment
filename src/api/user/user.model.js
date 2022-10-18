@@ -32,7 +32,7 @@ const userSchema = new Schema(
       required: true,
     },
     favs: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Fav" }],
+      type: [{ type: Schema.Types.ObjectId, ref: "FavList" }],
       required: false,
     },
   },

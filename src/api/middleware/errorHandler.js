@@ -20,6 +20,11 @@ const errorHandler = (err, req, res,next) => {
     error = new ErrroResponse(message,400)
   }
 
+  if(err.name === 'CastError') {
+    const message = `Not valid ${err.valueType} in field ${err.path} `
+    error = new ErrroResponse(message,400)
+  }
+
   res
     .status(error.statusCode || 500)
     .json({ message: error.message || "Server Error"});

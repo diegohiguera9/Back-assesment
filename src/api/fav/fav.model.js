@@ -10,9 +10,13 @@ const favModel = new Schema(
       type: String,
       required: true,
     },
-    user: {
+    link:{
+      type: String,
+      required: true
+    },
+    favList: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'FavList',
       required: true,
     },
   },

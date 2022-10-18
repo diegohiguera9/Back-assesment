@@ -46,7 +46,6 @@ describe("User", () => {
     const user = { email: "test@test.com", password: "123" };;
     const res = await clonServer(app).post("/auth/local/singup").send(user);
     
-    console.log(res.body.message)
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toMatch("Password must have at least a symbol, upper and lower case letters and a number");
   });
